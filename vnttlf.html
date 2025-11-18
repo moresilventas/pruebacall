@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flujo de Venta Telefónica – Moresil</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-5xl mx-auto p-4">
+    <div class="bg-slate-800 rounded-2xl shadow-xl border border-slate-700 p-6 md:p-8">
+      <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-700 pb-4 mb-4">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-white">
+            Flujo de Venta Telefónica – Moresil
+          </h1>
+          <p class="text-sm text-slate-300 mt-1">
+            Haz clic según lo que dice el cliente. Te voy guiando paso a paso.
+          </p>
+        </div>
+        <div class="text-xs text-slate-400">
+          <div><span class="font-semibold text-emerald-400">Objetivo:</span> propuesta + segunda llamada.</div>
+          <div><span class="font-semibold text-emerald-400">Regla:</span> Tú mandas el siguiente paso.</div>
+        </div>
+      </header>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Columna izquierda -->
+        <div class="space-y-4">
+          <div class="bg-slate-900/70 border border-slate-700 rounded-xl p-4">
+            <h2 class="text-lg font-semibold text-emerald-400 flex items-center gap-2">
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Paso actual
+            </h2>
+            <p id="stepTitle" class="mt-2 text-base font-medium text-slate-100">
+              1. Apertura
+            </p>
+            <p class="mt-1 text-[11px] uppercase tracking-wide text-slate-400">Qué debes decir ahora:</p>
+            <div class="mt-3 bg-slate-800/80 border border-slate-700 rounded-lg p-3">
+              <p id="scriptLine" class="text-sm leading-relaxed text-slate-100">
+                «Hola, muy buenas, le habla <span class="font-semibold text-emerald-300">Ion Condrea</span>, 
+                del departamento comercial de <span class="font-semibold text-emerald-300">Moresil</span>. 
+                ¿Con quién tengo el gusto?»
+              </p>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/70 border border-slate-700 rounded-xl p-4">
+            <h3 class="text-sm font-semibold text-slate-200 mb-2">Notas para ti</h3>
+            <ul class="text-xs text-slate-300 space-y-1 list-disc list-inside">
+              <li>Deja hablar al cliente. Tú llevas el mapa, no el monólogo.</li>
+              <li>Meta de la llamada: <span class="font-semibold text-emerald-300">datos + propuesta + segunda llamada</span>.</li>
+              <li>Si se lía: vuelve a «Para poder orientarle bien…».</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Columna derecha: opciones -->
+        <div class="bg-slate-900/70 border border-slate-700 rounded-xl p-4 space-y-4">
+          <h2 class="text-sm font-semibold text-slate-200">¿Qué hace / dice el cliente?</h2>
+          <div id="optionsContainer" class="space-y-2">
+            <!-- Aquí se insertan las opciones dinámicamente -->
+          </div>
+
+          <div class="pt-3 border-t border-slate-800 flex flex-wrap gap-2 justify-between">
+            <button id="backBtn" class="px-3 py-1.5 text-xs rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed">
+              ⬅️ Paso anterior
+            </button>
+            <button id="restartBtn" class="px-3 py-1.5 text-xs rounded-lg bg-red-500/90 text-white hover:bg-red-600">
+              🔄 Empezar de nuevo
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <footer class="mt-6 border-t border-slate-800 pt-3 text-[11px] text-slate-400 flex flex-wrap gap-2 justify-between">
+        <span>Guion interactivo pensado para todo tipo de máquinas Moresil.</span>
+        <span>Ajusta tú los [HUECOS] con modelo, precio y detalles.</span>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // Mapa de pasos: título, frase y opciones
+    const steps = {
+      apertura: {
+        title: "1. Apertura",
+        line: "«Hola, muy buenas, le habla <span class='font-semibold text-emerald-300'>Ion Condrea</span>, del departamento comercial de <span class='font-semibold text-emerald-300'>Moresil</span>. ¿Con quién tengo el gusto?»",
+        options: [
+          { label: "El cliente dice su nombre.", next: "saludoNombre" }
+        ]
+      },
+      saludoNombre: {
+        title: "1.1 Saludo + motivo de la llamada",
+        line: "«Encantado, don/doña <span class='font-semibold text-emerald-300'>[NOMBRE]</span>. Dígame, ¿en qué puedo ayudarle? ¿Qué tenía en mente?»",
+        options: [
+          { label: "Pregunta por una máquina concreta.", next: "pideMaquina" },
+          { label: "Solo quiere 'saber precios' / curiosidad.", next: "soloPrecio" }
+        ]
+      },
+      pideMaquina: {
+        title: "2. Centrar la máquina",
+        line: "«Perfecto, un/a <span class='font-semibold text-emerald-300'>[TIPO DE MÁQUINA]</span> para eso tiene todo el sentido. Para no decirle un número al aire y equivocarme, le hago un par de preguntas rápidas sobre lo que usted tiene y cómo trabaja, ¿le parece?»",
+        options: [
+          { label: "Acepta seguir hablando.", next: "datosBasicos" },
+          { label: "Está con prisa, quiere precio rápido.", next: "prisaPrecio" }
+        ]
+      },
+      soloPrecio: {
+        title: "2. Solo quiere precio (curiosidad)",
+        line: "«Perfecto, don/doña [NOMBRE]. Mucha gente llama igual, solo para orientarse. Para que el precio tenga sentido y no le líe, ¿le puedo hacer un par de preguntas rápidas sobre su máquina y cómo trabaja?»",
+        options: [
+          { label: "Acepta que le preguntes.", next: "datosBasicos" },
+          { label: "Insiste en 'dígame un precio aproximado sin más'.", next: "precioMuyRapido" }
+        ]
+      },
+      prisaPrecio: {
+        title: "2.1 Cliente con prisa",
+        line: "«Le entiendo, vamos al grano. Le doy una horquilla aproximada para que se sitúe y, si luego le interesa, afinamos con calma. Para no decirle un disparate: ¿para qué cosechadora es y qué cultivo principal trabaja?»",
+        options: [
+          { label: "Responde cosechadora y cultivo.", next: "precioOrientativoLuegoDatos" }
+        ]
+      },
+      precioMuyRapido: {
+        title: "2.2 Solo quiere un número",
+        line: "«Se lo puedo decir, pero prefiero no engañarle. Le doy una horquilla realista para su caso y así ya sabe si está en su rango. Dígame solo: ¿para qué cosechadora es y qué cultivo principal trabaja?»",
+        options: [
+          { label: "Responde cosechadora y cultivo.", next: "precioOrientativoLuegoDatos" }
+        ]
+      },
+      precioOrientativoLuegoDatos: {
+        title: "2.3 Horquilla + enganchar datos",
+        line: "«En ese tipo de equipo solemos movernos entre <span class='font-semibold text-emerald-300'>[X y Y €]</span>, según ancho y configuración. Para saber si usted estaría más cerca de X o de Y, ¿me deja que le pregunte dos cosas más de cómo trabaja?»",
+        options: [
+          { label: "Acepta seguir con datos.", next: "datosBasicos" }
+        ]
+      },
+      datosBasicos: {
+        title: "3. Datos básicos del trabajo",
+        line: "«Genial. Primero, ¿con qué cosechadora / tractor está trabajando ahora mismo? (marca y modelo, más o menos).»",
+        options: [
+          { label: "Te dice máquina.", next: "zonaYTipoCliente" }
+        ]
+      },
+      zonaYTipoCliente: {
+        title: "3.1 Zona y tipo de cliente",
+        line: "«¿Por qué zona trabajan ustedes normalmente? ¿[PROVINCIA/COMARCA]? ¿Y es para fincas propias o también hacen trabajos a terceros / empresa de servicios?»",
+        options: [
+          { label: "Responde zona y tipo.", next: "volumenTrabajo" }
+        ]
+      },
+      volumenTrabajo: {
+        title: "3.2 Volumen de trabajo",
+        line: "«Y para ajustar bien el tamaño y ver si le compensa una cosa u otra: en [CULTIVO/TRABAJO PRINCIPAL], ¿diría que trabajan pocas hectáreas, un volumen medio o ya bastante serio?»",
+        options: [
+          { label: "Te da idea de volumen.", next: "situacionActual" }
+        ]
+      },
+      situacionActual: {
+        title: "4. Situación actual",
+        line: "«Y con lo que lleva ahora, hablando claro: ¿está más bien contento y solo quiere comparar, o hay algo que usted cambiaría si pudiera (consumo, paradas, que no llega donde quiere…)?»",
+        options: [
+          { label: "Dice que está contento, solo compara.", next: "contentoSoloCompara" },
+          { label: "Reconoce problemas (consumo, averías, etc.).", next: "tieneDolor" }
+        ]
+      },
+      contentoSoloCompara: {
+        title: "4.1 Contento, solo compara",
+        line: "«Eso es buena señal. Muchos clientes están igual: la máquina cumple, pero miran opciones por si pueden ganar tiempo o prevenir problemas. Yo le preparo una opción que tenga sentido para lo que trabaja y así, si algún día decide dar el paso, ya tiene el trabajo hecho.»",
+        options: [
+          { label: "Pasar a presentar solución.", next: "presentarSolucion" }
+        ]
+      },
+      tieneDolor: {
+        title: "4.2 Hay problema claro",
+        line: "«Entonces lo que más le fastidia ahora es <span class='font-semibold text-emerald-300'>[RESUMES LO QUE HA DICHO]</span>. Eso al final es tiempo y dinero en campaña, lo entiendo perfectamente.»",
+        options: [
+          { label: "Pasar a presentar solución.", next: "presentarSolucion" }
+        ]
+      },
+      presentarSolucion: {
+        title: "5. Presentar solución Moresil",
+        line: "«Con todo lo que me ha contado —tipo de trabajo, zona, máquina que lleva y volumen que maneja—, lo que yo veo más lógico para usted es un <span class='font-semibold text-emerald-300'>[TIPO DE MÁQUINA]</span> modelo <span class='font-semibold text-emerald-300'>[MODELO]</span> de Moresil.\n\nLa idea es sencilla:\n- menos paradas en campaña,\n- cada [hectárea/árbol/tonelada] le sale mejor de coste,\n- y usted va más tranquilo porque el conjunto responde en sus condiciones.»",
+        options: [
+          { label: "El cliente pide precio.", next: "bloquePrecio" },
+          { label: "Muestra interés pero no pregunta precio.", next: "preCerrarSinPrecio" }
+        ]
+      },
+      preCerrarSinPrecio: {
+        title: "5.1 Cerrar siguiente paso sin entrar aún en precio",
+        line: "«Para que lo vea claro y por escrito, lo mejor es que le prepare una propuesta con este modelo [y, si quiere, una alternativa para comparar]. Se la envío y así la puede mirar con calma o enseñarla a quien tenga que decidir.»",
+        options: [
+          { label: "Acepta propuesta.", next: "pedirContacto" }
+        ]
+      },
+      bloquePrecio: {
+        title: "5.2 Hablar de precio",
+        line: "«Se lo digo claro. En la configuración que encaja con lo que me ha contado —[RESUMES: filas/ancho/opciones clave]— este equipo se está moviendo alrededor de <span class='font-semibold text-emerald-300'>[PRECIO ORIENTATIVO]</span> más IVA.\n\nLuego en la propuesta se lo detallo bien: qué incluye exactamente y qué opciones hay por encima o por debajo, para que no haya sorpresas.»",
+        options: [
+          { label: "Quiere propuesta.", next: "pedirContacto" },
+          { label: "Dice que es caro / duda.", next: "objecionCaro" }
+        ]
+      },
+      objecionCaro: {
+        title: "5.3 Objeción: 'es caro'",
+        line: "«Le entiendo, es una inversión seria. Precisamente por eso prefiero que tenga la propuesta bien detallada: qué lleva, qué no, y qué alternativas hay.\n\nCuando se ve con números delante —incluido lo que se quitan de paradas, talleres o pérdidas—, muchos clientes ya valoran si les compensa o no. Si le parece, se la preparo y así decide con calma, sin presión.»",
+        options: [
+          { label: "Acepta propuesta.", next: "pedirContacto" },
+          { label: "No quiere seguir.", next: "cierreCordiales" }
+        ]
+      },
+      pedirContacto: {
+        title: "6. Pedir contacto (email / WhatsApp)",
+        line: "«Para mandarle la propuesta: ¿le va mejor que se la envíe por <span class='font-semibold text-emerald-300'>correo electrónico</span> o por <span class='font-semibold text-emerald-300'>WhatsApp</span>?»",
+        options: [
+          { label: "Da correo.", next: "pideEmail" },
+          { label: "Prefiere WhatsApp.", next: "pideWhatsapp" }
+        ]
+      },
+      pideEmail: {
+        title: "6.1 Recoger correo",
+        line: "«Perfecto, ¿qué correo utilizo para esto?»",
+        options: [
+          { label: "Te da el correo.", next: "segundaLlamada" }
+        ]
+      },
+      pideWhatsapp: {
+        title: "6.2 Confirmar WhatsApp",
+        line: "«Perfecto, se la envío entonces a este mismo número por WhatsApp, para que lo tenga a mano.»",
+        options: [
+          { label: "Confirmado.", next: "segundaLlamada" }
+        ]
+      },
+      segundaLlamada: {
+        title: "7. Asegurar la siguiente llamada",
+        line: "«En cuanto tenga la propuesta hecha, se la envío y así la puede mirar con calma. Para no dejarlo en el aire, le llamo un momento y vemos si encaja o no.\n\n¿Le viene mejor que le llame <span class='font-semibold text-emerald-300'>mañana</span> o <span class='font-semibold text-emerald-300'>pasado</span>? ¿Y mejor por la <span class='font-semibold text-emerald-300'>mañana</span> o por la <span class='font-semibold text-emerald-300'>tarde</span>?»",
+        options: [
+          { label: "Acepta día y franja.", next: "cierreFuerte" },
+          { label: "Dice 'ya te llamo yo'.", next: "yaTeLlamoYo" }
+        ]
+      },
+      yaTeLlamoYo: {
+        title: "7.1 Objeción: 'ya te llamo yo'",
+        line: "«Perfecto, como usted prefiera. De todas formas, para que eso no se quede perdido en el correo, si le parece le pego yo un toque corto el [DÍA] y así me dice en un minuto si le encaja o lo dejamos estar. ¿Le viene bien ese día?»",
+        options: [
+          { label: "Acepta día.", next: "cierreFuerte" },
+          { label: "No quiere compromiso.", next: "cierreCordiales" }
+        ]
+      },
+      cierreFuerte: {
+        title: "8. Despedida cerrando siguiente acción",
+        line: "«Perfecto, don/doña [NOMBRE]. Entonces queda así:\n– Le envío la propuesta de [MODELO] a [EMAIL/WHATSAPP].\n– Y el [DÍA/HORA] le llamo un momento para verla juntos.\nHa sido un placer hablar con usted. Soy Ion Condrea, de Moresil; para cualquier cosa de maquinaria, aquí me tiene.\nQue tenga muy buena campaña.»",
+        options: []
+      },
+      cierreCordiales: {
+        title: "8. Despedida cordial sin compromiso",
+        line: "«Perfecto, don/doña [NOMBRE], ningún problema. Si en algún momento quiere mirar opciones o necesita información, aquí nos tiene en Moresil.\nHa sido un placer hablar con usted y le deseo muy buena campaña.»",
+        options: []
+      }
+    };
+
+    let history = ["apertura"];
+
+    const stepTitleEl = document.getElementById("stepTitle");
+    const scriptLineEl = document.getElementById("scriptLine");
+    const optionsContainerEl = document.getElementById("optionsContainer");
+    const backBtn = document.getElementById("backBtn");
+    const restartBtn = document.getElementById("restartBtn");
+
+    function renderStep(key) {
+      const step = steps[key];
+      if (!step) return;
+      stepTitleEl.textContent = step.title;
+      scriptLineEl.innerHTML = step.line.replace(/\n/g, "<br>");
+      optionsContainerEl.innerHTML = "";
+
+      if (!step.options || step.options.length === 0) {
+        const p = document.createElement("p");
+        p.className = "text-xs text-emerald-300 mt-2";
+        p.textContent = "Fin del flujo. Si hoy no compra, ya tienes atado el siguiente paso o buena relación.";
+        optionsContainerEl.appendChild(p);
+        return;
+      }
+
+      step.options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg border border-slate-600 bg-slate-800/80 hover:bg-slate-700 transition";
+        btn.textContent = opt.label;
+        btn.onclick = () => {
+          history.push(opt.next);
+          renderStep(opt.next);
+          updateBackButton();
+        };
+        optionsContainerEl.appendChild(btn);
+      });
+    }
+
+    function updateBackButton() {
+      backBtn.disabled = history.length <= 1;
+    }
+
+    backBtn.onclick = () => {
+      if (history.length > 1) {
+        history.pop();
+        renderStep(history[history.length - 1]);
+        updateBackButton();
+      }
+    };
+
+    restartBtn.onclick = () => {
+      history = ["apertura"];
+      renderStep("apertura");
+      updateBackButton();
+    };
+
+    // Inicializar
+    renderStep("apertura");
+    updateBackButton();
+  </script>
+</body>
+</html>
